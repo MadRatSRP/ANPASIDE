@@ -33,7 +33,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 
 public class CodeEditor {
-
     private Context context;
     private TabHost tabHost;
     public EditorConfig editorConfig;

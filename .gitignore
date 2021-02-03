@@ -1,1 +1,5 @@
+# Directories
 build/
+.gradle/
+.idea/
+gradle/

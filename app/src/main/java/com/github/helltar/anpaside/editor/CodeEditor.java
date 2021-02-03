@@ -7,10 +7,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnKeyListener;
-import android.view.View.OnLongClickListener;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ScrollView;
@@ -33,17 +31,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 
 public class CodeEditor {
-    private Context context;
-    private TabHost tabHost;
+    private final Context context;
+    private final TabHost tabHost;
     public EditorConfig editorConfig;
 
     private String btnTabCloseName = "Close";
-    private String tabIns = "    ";
-    private int fontColor = Color.rgb(220, 220, 220);
-    private Typeface fontTypeface = Typeface.MONOSPACE;
+    private final int fontColor = Color.rgb(220, 220, 220);
+    private final Typeface fontTypeface = Typeface.MONOSPACE;
 
     public static boolean isFilesModified = false;
-    private LinkedList<String> filenameList = new LinkedList<>();
+    private final LinkedList<String> filenameList = new LinkedList<>();
 
     public CodeEditor(Context context, TabHost tabHost) {
         this.context = context;
@@ -57,7 +54,7 @@ public class CodeEditor {
             return true;
         }
 
-        String text = "";
+        String text;
 
         try {
             text = FileUtils.readFileToString(
@@ -91,22 +88,19 @@ public class CodeEditor {
         isFilesModified = false;
         highlights(edtText.getEditableText());
 
-        createTabs(filename, new File(filename).getName(), new TabContentFactory() {
-                @Override
-                public View createTabContent(String p1) {
-                    ScrollView sv = new ScrollView(context);
-                    sv.setFillViewport(true);
-                    sv.addView(edtText);
-                    return sv;
-                }
-            });
+        createTabs(filename, new File(filename).getName(), string -> {
+            ScrollView sv = new ScrollView(context);
+            sv.setFillViewport(true);
+            sv.addView(edtText);
+            return sv;
+        });
 
         edtText.requestFocus();
 
         return true;
     }
 
-    private TextWatcher textWatcher = new TextWatcher() {
+    private final TextWatcher textWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             MainActivity.svLog.setVisibility(View.GONE);
@@ -123,29 +117,27 @@ public class CodeEditor {
         }
     };
 
-    private OnKeyListener keyListener = new OnKeyListener() {
-        @Override
-        public boolean onKey(View v, int keyCode, KeyEvent keyEvent) {
-            if (keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                switch (keyCode) {
-                    case KeyEvent.KEYCODE_TAB:
-                        EditText editText = (EditText) v;
-                        editText.getText().insert(editText.getSelectionStart(), tabIns);
+    private final OnKeyListener keyListener = (view, keyCode, keyEvent) -> {
+        if (keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+            String tabIns = "    ";
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_TAB:
+                    EditText editText = (EditText) view;
+                    editText.getText().insert(editText.getSelectionStart(), tabIns);
+                    return true;
+
+                case KeyEvent.KEYCODE_S:
+                    if (keyEvent.isCtrlPressed()) {
+                        saveAllFiles();
+                        showToastFileSaved();
                         return true;
+                    }
 
-                    case KeyEvent.KEYCODE_S:
-                        if (keyEvent.isCtrlPressed()) {
-                            saveAllFiles();
-                            showToastFileSaved();
-                            return true;
-                        }
-
-                        return false;
-                }
+                    return false;
             }
-
-            return false;
         }
+
+        return false;
     };
 
     private void highlights(Editable s) {
@@ -164,13 +156,10 @@ public class CodeEditor {
         tabHost.setCurrentTabByTag(tag);
 
         tabHost.getTabWidget().getChildAt(tabHost.getTabWidget().getChildCount() - 1)
-            .setOnLongClickListener(new OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    tabHost.setCurrentTabByTag(tabSpec.getTag());
-                    showPopupMenu(v, tabSpec.getTag());
-                    return true;
-                }
+            .setOnLongClickListener(view -> {
+                tabHost.setCurrentTabByTag(tabSpec.getTag());
+                showPopupMenu(view, tabSpec.getTag());
+                return true;
             });
     }
 
@@ -178,13 +167,10 @@ public class CodeEditor {
         PopupMenu pm = new PopupMenu(context, v);
 
         pm.getMenu().add(btnTabCloseName);
-        pm.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    closeFile(tag);
-                    return true;
-                }
-            });
+        pm.setOnMenuItemClickListener(menuItem -> {
+            closeFile(tag);
+            return true;
+        });
 
         pm.show();
     }
@@ -232,7 +218,8 @@ public class CodeEditor {
     }
 
     private void showToastFileSaved() {
-        Toast toast = Toast.makeText(context, context.getString(R.string.msg_saved), Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(context, context.getString(R.string.msg_saved),
+            Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.BOTTOM, 0, 80);
         toast.show();
     }
